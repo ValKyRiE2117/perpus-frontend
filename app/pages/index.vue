@@ -3,6 +3,7 @@
     <UPageHero
       title="Website Perpus Online"
       description="Sistem manajemen perpustakaan digital yang memudahkan Anda dalam mencari, meminjam, dan mengelola koleksi buku. Akses ribuan buku dari mana saja dan kapan saja."
+      headline="Ariandaru Kusuma Yudha |  22.01.55.3012"
       :links="[
         {
           label: 'Cari Peminjaman Anda',
@@ -24,7 +25,7 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <!-- Loading state -->
           <UCard v-if="booksPending">
             <div class="animate-pulse space-y-3">
@@ -47,18 +48,20 @@
           </div>
 
           <!-- Book Card Template -->
-          <UCard v-else v-for="book in books" :key="book.id">
-            <template #header>
-              <div class=""></div>
-            </template>
-
+          <UPageCard
+            v-else
+            v-for="book in books"
+            :key="book.id"
+            spotlight
+            spotlight-color="primary"
+          >
             <div class="space-y-3">
               <div class="flex gap-3 justify-between">
                 <h3 class="font-semibold text-lg text-gray-900 dark:text-white">
                   {{ book.title }}
                 </h3>
                 <div class="flex-1">
-                  <UBadge color="primary" variant="subtle" size="sm">{{
+                  <UBadge color="primary" variant="subtle" size="md">{{
                     book.category
                   }}</UBadge>
                 </div>
@@ -92,7 +95,7 @@
                 </UBadge>
               </div>
             </div>
-          </UCard>
+          </UPageCard>
         </div>
       </div>
     </section>
@@ -130,7 +133,12 @@
             </div>
             <UButton @click="refreshAuthors">Retry</UButton>
           </div>
-          <UCard v-for="author in authors" :key="author.id">
+          <UPageCard
+            v-for="author in authors"
+            :key="author.id"
+            spotlight
+            spotlight-color="primary"
+          >
             <div class="space-y-4">
               <div class="flex items-start gap-3">
                 <div class="flex-1">
@@ -160,7 +168,7 @@
                 {{ author.bookCount }} Buku
               </UBadge>
             </div>
-          </UCard>
+          </UPageCard>
         </div>
         <!-- <div class="mt-6 text-right">
           <ULink to="/authors" class="text-primary-500 underline transition"
@@ -171,8 +179,12 @@
     </section>
 
     <!-- Find Book Loans Section -->
-    <UPageSection class="bg-white dark:bg-gray-800" id="bookLoans">
-      <UPageCTA class="max-w-xl mx-auto">
+    <UPageSection id="bookLoans">
+      <UPageCard
+        class="max-w-xl mx-auto p-8"
+        spotlight
+        spotlight-color="primary"
+      >
         <div class="text-center">
           <div
             class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center mx-auto mb-4"
@@ -191,24 +203,44 @@
           </p>
         </div>
 
-        <UForm class="space-y-4" @submit="onSubmit">
+        <UForm :state="loanForm" class="space-y-4" @submit="onSubmit">
           <UFormField label="Email" name="email" class="w-full">
             <UInput
+              v-model="loanForm.email"
               placeholder="nama@email.com"
               size="lg"
               icon="i-lucide-mail"
               class="w-full"
+              required
             />
           </UFormField>
 
           <UFormField label="Nomor Telepon" name="phone" class="w-full">
             <UInput
+              v-model="loanForm.phone"
               placeholder="123-456-7890"
               size="lg"
               icon="i-lucide-phone"
               class="w-full"
+              required
             />
           </UFormField>
+
+          <!-- No Data Found Message -->
+          <UAlert
+            v-if="noDataMessage"
+            color="error"
+            variant="soft"
+            title="Data Tidak Ditemukan"
+            :description="noDataMessage"
+            icon="i-lucide-info"
+            :close-button="{
+              icon: 'i-lucide-x',
+              color: 'amber',
+              variant: 'link',
+            }"
+            @close="noDataMessage = null"
+          />
 
           <UButton
             label="Cari Peminjaman"
@@ -216,10 +248,111 @@
             block
             color="primary"
             type="submit"
+            :loading="loading"
           />
         </UForm>
-      </UPageCTA>
+      </UPageCard>
     </UPageSection>
+
+    <!-- Loans Results Section -->
+    <section v-if="memberData" class="pb-12">
+      <div class="max-w-4xl mx-auto">
+        <!-- Member Info -->
+        <UCard class="mb-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                {{ memberData.name }}
+              </h3>
+              <div class="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-mail" class="w-4 h-4" />
+                  <span>{{ memberData.email }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-phone" class="w-4 h-4" />
+                  <span>{{ memberData.phone }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-map-pin" class="w-4 h-4" />
+                  <span>{{ memberData.address }}</span>
+                </div>
+              </div>
+            </div>
+            <UBadge color="primary" variant="solid" size="lg">
+              {{ memberData.loans_count }} Peminjaman
+            </UBadge>
+          </div>
+        </UCard>
+
+        <!-- Loans List -->
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+            Riwayat Peminjaman
+          </h3>
+          <UButton
+            label="Cari Lagi"
+            size="sm"
+            variant="ghost"
+            icon="i-lucide-x"
+            @click="reset"
+          />
+        </div>
+
+        <div v-if="memberData.loans.length > 0" class="space-y-4">
+          <UCard v-for="loan in memberData.loans" :key="loan.id">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-start gap-3">
+                  <div class="flex-1">
+                    <h4
+                      class="font-semibold text-lg text-gray-900 dark:text-white mb-2"
+                    >
+                      {{ loan.book_title }}
+                    </h4>
+
+                    <div
+                      class="space-y-1 text-sm text-gray-600 dark:text-gray-400"
+                    >
+                      <div class="flex items-center gap-2">
+                        <UIcon name="i-lucide-calendar" class="w-4 h-4" />
+                        <span>Dipinjam: {{ formatDate(loan.loan_date) }}</span>
+                      </div>
+                      <div
+                        v-if="loan.return_date"
+                        class="flex items-center gap-2"
+                      >
+                        <UIcon name="i-lucide-calendar-check" class="w-4 h-4" />
+                        <span
+                          >Dikembalikan:
+                          {{ formatDate(loan.return_date) }}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <UBadge
+                :color="getStatusColor(loan.status)"
+                variant="soft"
+                size="lg"
+              >
+                {{ getStatusLabel(loan.status) }}
+              </UBadge>
+            </div>
+          </UCard>
+        </div>
+
+        <UAlert
+          v-else
+          color="blue"
+          variant="soft"
+          title="Tidak ada peminjaman"
+          description="Anda belum memiliki riwayat peminjaman buku."
+        />
+      </div>
+    </section>
   </div>
 </template>
 
@@ -237,4 +370,75 @@ const {
   error: authorsError,
   refresh: refreshAuthors,
 } = await useAuthors();
+
+// Loan form state
+const loanForm = ref({
+  email: "",
+  phone: "",
+});
+
+const { memberData, loading, error, findLoans, reset } = useMemberLoans();
+const noDataMessage = ref(null);
+
+// Submit handler
+const onSubmit = async () => {
+  try {
+    // Clear previous messages
+    noDataMessage.value = null;
+    error.value = null;
+
+    await findLoans(loanForm.value.email, loanForm.value.phone);
+
+    // Scroll to results if data found
+    if (memberData.value) {
+      nextTick(() => {
+        const resultsSection =
+          document.querySelector("#bookLoans").nextElementSibling;
+        if (resultsSection) {
+          resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    }
+  } catch (err) {
+    // Check if it's a "not found" error
+    if (
+      err.statusCode === 404 ||
+      err.message?.toLowerCase().includes("not found")
+    ) {
+      noDataMessage.value =
+        "Member dengan email dan nomor telepon tersebut tidak ditemukan. Silakan periksa kembali data Anda.";
+    }
+    console.error("Error finding loans:", err);
+  }
+};
+
+// Date formatter
+const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("id-ID", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+// Status helpers
+const getStatusColor = (status) => {
+  const colors = {
+    borrowed: "primary",
+    returned: "info",
+    overdue: "error",
+  };
+  return colors[status] || "gray";
+};
+
+const getStatusLabel = (status) => {
+  const labels = {
+    borrowed: "Dipinjam",
+    returned: "Dikembalikan",
+    overdue: "Terlambat",
+  };
+  return labels[status] || status;
+};
 </script>
