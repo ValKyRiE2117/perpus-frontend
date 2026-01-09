@@ -3,7 +3,6 @@
     <UPageHero
       title="Website Perpus Online"
       description="Sistem manajemen perpustakaan digital yang memudahkan Anda dalam mencari, meminjam, dan mengelola koleksi buku. Akses ribuan buku dari mana saja dan kapan saja."
-      headline="Ariandaru Kusuma Yudha |  22.01.55.3012"
       :links="[
         {
           label: 'Cari Peminjaman Anda',
